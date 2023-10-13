@@ -30,7 +30,7 @@ export default function VideoGridItem({
   videoUrl,
 }: VideoGridItemProps) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const videoRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (videoRef.current == null) return;
