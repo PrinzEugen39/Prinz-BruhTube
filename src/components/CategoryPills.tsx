@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "./Button";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type CategoryPillProps = {
   categories: string[];
@@ -8,7 +8,7 @@ type CategoryPillProps = {
   onSelect: (category: string) => void;
 };
 
-const TRANSLATE_AMOUNT = 200;
+const TRANSLATE_AMOUNT = 250;
 
 export default function CategoryPills({
   categories,
@@ -17,12 +17,35 @@ export default function CategoryPills({
 }: CategoryPillProps) {
   const [translate, setTranslate] = useState(0);
   const [isLeftVisible, SetIsLeftVisible] = useState(false);
-  const [isRightVisible, SetIsRightVisible] = useState(false);
+  const [isRightVisible, SetIsRightVisible] = useState(true);
+  const containterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containterRef.current == null) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const container = entries[0]?.target;
+      if (container == null) return;
+
+      SetIsLeftVisible(translate > 0);
+      SetIsRightVisible(
+        translate + container.clientWidth < container.scrollWidth
+      );
+    });
+
+    observer.observe(containterRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [categories, translate]);
 
   return (
-    <div className="relative overflow-x-hidden">
-      <div className="flex gap-3 transition-transform whitespace-nowrap w-[max-content]"
-      style={{ transform: `translateX(-${translate}px)`}}>
+    <div ref={containterRef} className="relative overflow-x-hidden">
+      <div
+        className="flex gap-3 transition-transform whitespace-nowrap w-[max-content]"
+        style={{ transform: `translateX(-${translate}px)` }}
+      >
         {categories.map((category) => (
           <Button
             onClick={() => onSelect(category)}
@@ -58,6 +81,20 @@ export default function CategoryPills({
             variant="ghost"
             size="icon"
             className="h-full aspect-square w-auto p-1.5"
+            onClick={() => {
+              setTranslate((translate) => {
+                if (containterRef.current == null) {
+                  return translate;
+                }
+                const newTranslate = translate + TRANSLATE_AMOUNT;
+                const edge = containterRef.current.scrollWidth;
+                const width = containterRef.current.clientWidth;
+                if (newTranslate + width >= edge) {
+                  return edge - width;
+                }
+                return newTranslate;
+              });
+            }}
           >
             <ChevronRight />
           </Button>
